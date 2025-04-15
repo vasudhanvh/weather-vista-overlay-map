@@ -20,7 +20,7 @@ const CurrentWeather = ({ data }: CurrentWeatherProps) => {
   });
 
   return (
-    <Card className="weather-card bg-gradient-to-br from-purple-500/80 to-blue-500/80 text-white overflow-hidden animate-fade-in">
+    <Card className="weather-card bg-gradient-to-br from-weather-purple/80 to-weather-blue/80 text-white overflow-hidden animate-fade-in">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">

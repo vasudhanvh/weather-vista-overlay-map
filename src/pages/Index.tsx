@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Cloud, Github } from 'lucide-react';
 
 const Index = () => {
-  // Add leaflet CSS and JS dynamically
+  // Add leaflet CSS dynamically
   useEffect(() => {
-    // Add Leaflet CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css';
@@ -15,25 +14,14 @@ const Index = () => {
     link.crossOrigin = '';
     document.head.appendChild(link);
 
-    // Add Leaflet JS
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js';
-    script.integrity = 'sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==';
-    script.crossOrigin = '';
-    document.head.appendChild(script);
-
-    // Clean up
     return () => {
       document.head.removeChild(link);
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-200 to-blue-200">
-      <header className="bg-gradient-to-r from-purple-500 to-blue-500 shadow-md">
+    <div className="min-h-screen bg-weather-gradient">
+      <header className="bg-gradient-to-r from-weather-purple to-weather-blue shadow-md">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -57,7 +45,7 @@ const Index = () => {
         <WeatherDashboard />
       </main>
       
-      <footer className="py-6 bg-purple-600/90 text-white">
+      <footer className="py-6 bg-weather-dark/90 text-white">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-white/80">
             Weather data provided by WeatherAPI.com and OpenWeatherMap
