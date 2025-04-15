@@ -117,7 +117,7 @@ export default {
 				'pulse-slow': 'pulse-slow 3s infinite'
 			},
 			backgroundImage: {
-				'weather-gradient': 'linear-gradient(to right, #83a4d4, #b6fbff)',
+				'weather-gradient': 'linear-gradient(to right, #9b87f5, #b6fbff)',
 				'purple-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
 			}
 		}

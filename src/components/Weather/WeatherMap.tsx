@@ -1,10 +1,9 @@
 
-import { useEffect, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MapPin } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Card } from '@/components/ui/card';
 import { MapLayerType } from '@/types/weather';
 import { OPEN_WEATHER_MAP_KEY } from '@/services/weatherApi';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface WeatherMapProps {
   lat: number;
@@ -13,133 +12,108 @@ interface WeatherMapProps {
   onChangeLayer: (layer: MapLayerType) => void;
 }
 
-// Import leaflet dynamically in useEffect to avoid SSR issues
+const layerLabels: Record<MapLayerType, string> = {
+  'temp_new': 'Temperature',
+  'clouds_new': 'Clouds',
+  'precipitation_new': 'Precipitation',
+  'pressure_new': 'Pressure',
+  'wind_new': 'Wind Speed'
+};
+
 const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) => {
-  const mapRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const mapInstanceRef = useRef<any>(null);
-  const weatherLayerRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
 
-  const layerLabels: Record<MapLayerType, string> = {
-    'temp_new': 'Temperature',
-    'clouds_new': 'Clouds',
-    'precipitation_new': 'Precipitation',
-    'pressure_new': 'Pressure',
-    'wind_new': 'Wind Speed',
-  };
-
+  // Initialize map
   useEffect(() => {
-    const initMap = async () => {
-      if (!mapRef.current || mapInstanceRef.current) return;
-
-      // Dynamically import Leaflet
-      const L = await import('leaflet');
+    // Check if leaflet is available globally
+    if (typeof window === 'undefined' || !window.L) {
+      console.error('Leaflet is not loaded');
+      return;
+    }
+    
+    // Create the map instance if it doesn't exist yet
+    if (!mapInstanceRef.current && mapContainerRef.current) {
+      const L = window.L;
       
-      // Create map instance
-      mapInstanceRef.current = L.map(mapRef.current).setView([lat, lon], 8);
-
+      // Create map
+      mapInstanceRef.current = L.map(mapContainerRef.current).setView([lat, lon], 8);
+      
       // Add the base tile layer
-      L.tileLayer(`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`, {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(mapInstanceRef.current);
-
-      // Add the weather overlay layer
-      weatherLayerRef.current = L.tileLayer(
-        `https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`,
-        {
-          attribution: 'Weather data © OpenWeatherMap',
-          maxZoom: 18,
-          opacity: 0.7
-        }
-      ).addTo(mapInstanceRef.current);
-
-      // Add a marker for the location
-      const locationMarker = L.marker([lat, lon]).addTo(mapInstanceRef.current);
-      locationMarker.bindPopup(`<b>Your Location</b><br>${lat.toFixed(4)}, ${lon.toFixed(4)}`).openPopup();
-    };
-
-    initMap();
-
+      
+      // Add the weather tile layer
+      tileLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`, {
+        attribution: '&copy; OpenWeatherMap',
+        maxZoom: 19
+      }).addTo(mapInstanceRef.current);
+      
+      // Mark map as loaded
+      setMapLoaded(true);
+    }
+    
     // Cleanup function
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        tileLayerRef.current = null;
       }
     };
   }, [lat, lon]);
-
+  
+  // Update the map center when lat/lon changes
+  useEffect(() => {
+    if (mapInstanceRef.current && mapLoaded) {
+      mapInstanceRef.current.setView([lat, lon], 8);
+    }
+  }, [lat, lon, mapLoaded]);
+  
   // Update the weather layer when it changes
   useEffect(() => {
-    if (weatherLayerRef.current) {
-      weatherLayerRef.current.setUrl(
-        `https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`
-      );
-    }
-  }, [currentLayer]);
-
-  // Update map when lat/lon changes
-  useEffect(() => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setView([lat, lon], 8);
+    if (tileLayerRef.current && mapLoaded) {
+      // Remove the old layer
+      tileLayerRef.current.remove();
       
-      // Also update the marker
+      // Add the new layer with the updated layer type
       const L = window.L;
-      if (L) {
-        // Clear all layers except the base tile layer
-        mapInstanceRef.current.eachLayer((layer: any) => {
-          if (layer instanceof L.Marker) {
-            mapInstanceRef.current.removeLayer(layer);
-          }
-        });
-        
-        // Add a new marker
-        const locationMarker = L.marker([lat, lon]).addTo(mapInstanceRef.current);
-        locationMarker.bindPopup(`<b>Current Location</b><br>${lat.toFixed(4)}, ${lon.toFixed(4)}`).openPopup();
-      }
+      tileLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`, {
+        attribution: '&copy; OpenWeatherMap',
+        maxZoom: 19
+      }).addTo(mapInstanceRef.current);
     }
-  }, [lat, lon]);
+  }, [currentLayer, mapLoaded]);
 
   return (
-    <Card className="weather-card animate-fade-in">
-      <CardContent className="p-4">
-        <div className="flex flex-col space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Weather Map</h2>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span className="text-sm">{lat.toFixed(2)}, {lon.toFixed(2)}</span>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-2 mb-2">
-            {Object.entries(layerLabels).map(([layer, label]) => (
-              <Button
-                key={layer}
-                onClick={() => onChangeLayer(layer as MapLayerType)}
-                variant={currentLayer === layer ? "default" : "outline"}
-                size="sm"
-                className={
-                  currentLayer === layer
-                    ? "map-control-btn active"
-                    : "map-control-btn"
-                }
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-          
-          <div 
-            ref={mapRef} 
-            className="w-full h-[400px] rounded-lg overflow-hidden border border-gray-200"
-            style={{ zIndex: 0 }}
-          />
-          
-          <div className="text-xs text-gray-500 text-center mt-2">
-            Weather data provided by OpenWeatherMap | Map data © OpenStreetMap contributors
-          </div>
+    <Card className="weather-card overflow-hidden animate-fade-in">
+      <div className="p-4 pb-0">
+        <h2 className="text-lg font-semibold mb-4">Weather Map</h2>
+        
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Object.entries(layerLabels).map(([layer, label]) => (
+            <button
+              key={layer}
+              onClick={() => onChangeLayer(layer as MapLayerType)}
+              className={`map-control-btn ${currentLayer === layer ? 'active' : ''}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-      </CardContent>
+      </div>
+      
+      {!mapLoaded ? (
+        <Skeleton className="h-[400px] rounded-none" />
+      ) : (
+        <div 
+          ref={mapContainerRef}
+          className="h-[400px] w-full z-0" 
+        />
+      )}
     </Card>
   );
 };
