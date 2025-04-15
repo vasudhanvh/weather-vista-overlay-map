@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Cloud, Github } from 'lucide-react';
 
 const Index = () => {
-  // Add leaflet CSS dynamically
+  // Add leaflet CSS and JS dynamically
   useEffect(() => {
+    // Add Leaflet CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css';
@@ -14,8 +15,19 @@ const Index = () => {
     link.crossOrigin = '';
     document.head.appendChild(link);
 
+    // Add Leaflet JS
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js';
+    script.integrity = 'sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==';
+    script.crossOrigin = '';
+    document.head.appendChild(script);
+
+    // Clean up
     return () => {
       document.head.removeChild(link);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 

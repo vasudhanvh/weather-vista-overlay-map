@@ -25,17 +25,36 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapInstanceRef = useRef<any>(null);
   const tileLayerRef = useRef<any>(null);
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
 
-  // Initialize map
+  // Check if Leaflet is loaded
   useEffect(() => {
-    // Check if leaflet is available globally
-    if (typeof window === 'undefined' || !window.L) {
-      console.error('Leaflet is not loaded');
-      return;
-    }
+    const checkLeaflet = () => {
+      if (window.L) {
+        setLeafletLoaded(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (checkLeaflet()) return;
+
+    // If not loaded yet, set up an interval to check
+    const interval = setInterval(() => {
+      if (checkLeaflet()) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Initialize map once Leaflet is available
+  useEffect(() => {
+    if (!leafletLoaded || !mapContainerRef.current) return;
     
     // Create the map instance if it doesn't exist yet
-    if (!mapInstanceRef.current && mapContainerRef.current) {
+    if (!mapInstanceRef.current) {
       const L = window.L;
       
       // Create map
@@ -64,7 +83,7 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
         tileLayerRef.current = null;
       }
     };
-  }, [lat, lon]);
+  }, [lat, lon, currentLayer, leafletLoaded]);
   
   // Update the map center when lat/lon changes
   useEffect(() => {
@@ -75,7 +94,7 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
   
   // Update the weather layer when it changes
   useEffect(() => {
-    if (tileLayerRef.current && mapLoaded) {
+    if (tileLayerRef.current && mapLoaded && leafletLoaded) {
       // Remove the old layer
       tileLayerRef.current.remove();
       
@@ -86,7 +105,7 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
         maxZoom: 19
       }).addTo(mapInstanceRef.current);
     }
-  }, [currentLayer, mapLoaded]);
+  }, [currentLayer, mapLoaded, leafletLoaded]);
 
   return (
     <Card className="weather-card overflow-hidden animate-fade-in">
@@ -106,7 +125,7 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
         </div>
       </div>
       
-      {!mapLoaded ? (
+      {!leafletLoaded || !mapLoaded ? (
         <Skeleton className="h-[400px] rounded-none" />
       ) : (
         <div 
