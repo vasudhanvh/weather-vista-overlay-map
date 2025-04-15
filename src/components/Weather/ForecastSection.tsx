@@ -84,7 +84,7 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
                     key={index} 
                     className={`forecast-card min-w-[100px] ${
                       isCurrentHourItem 
-                        ? 'bg-gradient-to-br from-weather-purple/80 to-weather-blue/80 text-white ring-2 ring-weather-purple/70' 
+                        ? 'bg-gradient-to-br from-purple-500/80 to-blue-500/80 text-white ring-2 ring-purple-500/70' 
                         : ''
                     }`}
                   >
@@ -94,7 +94,7 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
                     </p>
                     <div className="flex justify-center">
                       <img 
-                        src={`https:${hour.condition.icon}`} 
+                        src={hour.condition.icon.startsWith('//') ? `https:${hour.condition.icon}` : hour.condition.icon} 
                         alt={hour.condition.text}
                         className="w-10 h-10"
                       />
@@ -105,7 +105,7 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
                     <div className={`text-xs ${isCurrentHourItem ? 'text-white/90' : 'text-gray-500'} mt-1`}>
                       {hour.condition.text}
                     </div>
-                    <div className={`text-xs mt-2 flex justify-between ${isCurrentHourItem ? 'text-white/90' : ''}`}>
+                    <div className={`text-xs mt-2 flex justify-between ${isCurrentHourItem ? 'text-white/90' : 'text-gray-500'}`}>
                       <span>{hour.chance_of_rain}% rain</span>
                       <span>{hour.wind_kph} km/h</span>
                     </div>

@@ -55,24 +55,29 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
     
     // Create the map instance if it doesn't exist yet
     if (!mapInstanceRef.current) {
-      const L = window.L;
-      
-      // Create map
-      mapInstanceRef.current = L.map(mapContainerRef.current).setView([lat, lon], 8);
-      
-      // Add the base tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(mapInstanceRef.current);
-      
-      // Add the weather tile layer
-      tileLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`, {
-        attribution: '&copy; OpenWeatherMap',
-        maxZoom: 19
-      }).addTo(mapInstanceRef.current);
-      
-      // Mark map as loaded
-      setMapLoaded(true);
+      try {
+        const L = window.L;
+        
+        // Create map
+        mapInstanceRef.current = L.map(mapContainerRef.current).setView([lat, lon], 8);
+        
+        // Add the base tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapInstanceRef.current);
+        
+        // Add the weather tile layer
+        tileLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`, {
+          attribution: '&copy; OpenWeatherMap',
+          maxZoom: 19
+        }).addTo(mapInstanceRef.current);
+        
+        // Mark map as loaded
+        setMapLoaded(true);
+        console.log('Map initialized successfully');
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
     }
     
     // Cleanup function
@@ -95,21 +100,25 @@ const WeatherMap = ({ lat, lon, currentLayer, onChangeLayer }: WeatherMapProps) 
   // Update the weather layer when it changes
   useEffect(() => {
     if (tileLayerRef.current && mapLoaded && leafletLoaded) {
-      // Remove the old layer
-      tileLayerRef.current.remove();
-      
-      // Add the new layer with the updated layer type
-      const L = window.L;
-      tileLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`, {
-        attribution: '&copy; OpenWeatherMap',
-        maxZoom: 19
-      }).addTo(mapInstanceRef.current);
+      try {
+        // Remove the old layer
+        tileLayerRef.current.remove();
+        
+        // Add the new layer with the updated layer type
+        const L = window.L;
+        tileLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/${currentLayer}/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_MAP_KEY}`, {
+          attribution: '&copy; OpenWeatherMap',
+          maxZoom: 19
+        }).addTo(mapInstanceRef.current);
+      } catch (error) {
+        console.error('Error updating weather layer:', error);
+      }
     }
   }, [currentLayer, mapLoaded, leafletLoaded]);
 
   return (
     <Card className="weather-card overflow-hidden animate-fade-in">
-      <div className="p-4 pb-0">
+      <div className="p-4 pb-2">
         <h2 className="text-lg font-semibold mb-4">Weather Map</h2>
         
         <div className="flex flex-wrap gap-2 mb-4">
