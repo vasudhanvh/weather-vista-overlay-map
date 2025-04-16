@@ -64,38 +64,42 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
       <TabsContent value="hourly" className="mt-0">
         <Card className="weather-card">
           <h2 className="text-lg font-semibold mb-4 pl-2">Next 24 Hours</h2>
-          <ScrollArea className="weather-scroll max-h-[280px] pb-4">
-            <div className="flex gap-3 pb-4 px-2">
+          <ScrollArea className="weather-scroll pb-6 sm:h-[280px]">
+            <div className="flex gap-4 pb-6 px-4 overflow-x-auto">
               {getNext24Hours().map((hour, index) => {
                 const isCurrent = isCurrentHour(hour.time);
                 return (
                   <div 
                     key={index} 
-                    className={`forecast-card min-w-[100px] transition-all ${
+                    className={`forecast-card min-w-[110px] flex flex-col justify-between p-3 transition-all ${
                       isCurrent 
-                        ? 'bg-gradient-to-b from-weather-purple/10 to-weather-blue/20 border-weather-blue shadow-md' 
-                        : ''
+                        ? 'bg-gradient-to-b from-weather-purple/15 to-weather-blue/25 border-weather-blue shadow-lg' 
+                        : 'hover:shadow-md'
                     }`}
                   >
                     <div className="relative">
-                      <p className="font-medium mb-1">{isCurrent ? 'Now' : formatHour(hour.time)}</p>
+                      <p className={`font-medium mb-1 ${isCurrent ? 'text-weather-blue' : ''}`}>
+                        {isCurrent ? 'Now' : formatHour(hour.time)}
+                      </p>
                       {isCurrent && (
                         <span className="absolute top-0 right-0 w-2 h-2 bg-weather-blue rounded-full animate-pulse" />
                       )}
                     </div>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center my-2">
                       <img 
                         src={`https:${hour.condition.icon}`} 
                         alt={hour.condition.text}
-                        className={`w-10 h-10 ${isCurrent ? 'scale-110' : ''}`}
+                        className={`w-12 h-12 ${isCurrent ? 'scale-110 drop-shadow-md' : ''}`}
                       />
                     </div>
-                    <p className={`text-xl font-semibold mt-1 ${isCurrent ? 'text-weather-blue' : ''}`}>
+                    <p className={`text-2xl font-semibold mt-1 ${isCurrent ? 'text-weather-blue' : ''}`}>
                       {Math.round(hour.temp_c)}°
                     </p>
-                    <div className="text-xs text-gray-500 mt-1">{hour.condition.text}</div>
+                    <div className={`text-xs mt-1 ${isCurrent ? 'text-gray-700' : 'text-gray-500'}`}>
+                      {hour.condition.text}
+                    </div>
                     <div className="text-xs mt-2 flex justify-between">
-                      <span>{hour.chance_of_rain}% rain</span>
+                      <span>{hour.chance_of_rain}% 💧</span>
                       <span>{hour.wind_kph} km/h</span>
                     </div>
                   </div>
@@ -116,7 +120,7 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
                 <div 
                   key={index} 
                   className={`forecast-card flex flex-col h-full justify-between ${
-                    isToday ? 'bg-gradient-to-b from-weather-purple/10 to-weather-blue/20 border-weather-blue shadow-md' : ''
+                    isToday ? 'bg-gradient-to-b from-weather-purple/15 to-weather-blue/25 border-weather-blue shadow-md' : ''
                   }`}
                 >
                   <div>

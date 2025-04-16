@@ -14,7 +14,7 @@ import {
   Bar, 
   Legend
 } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer } from '@/components/ui/chart';
 
 interface WeatherChartsProps {
   forecastDays: ForecastDay[];
@@ -78,6 +78,23 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
     feelsLike: { label: 'Feels Like °C', theme: { light: '#9b87f5', dark: '#7c4dff' } }
   };
 
+  // Custom tooltip for the charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200">
+          <p className="text-sm font-medium text-gray-700">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={`item-${index}`} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.value}{entry.name.includes('Temp') ? '°C' : entry.name.includes('Rain') ? '%' : ''}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="weather-card animate-fade-in">
       <CardContent className="p-4">
@@ -105,7 +122,7 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
                       tick={{ fill: '#555', fontSize: 12 }}
                       tickMargin={10}
                     />
-                    <Tooltip content={(props) => <ChartTooltipContent {...props} labelClassName="text-gray-600" />} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Area 
                       type="monotone" 
                       name="Temperature"
@@ -158,7 +175,7 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
                       tick={{ fill: '#555', fontSize: 12 }}
                       tickMargin={10}
                     />
-                    <Tooltip content={(props) => <ChartTooltipContent {...props} labelClassName="text-gray-600" />} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Area 
                       type="monotone" 
                       name="Max Temperature"
@@ -220,7 +237,7 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
                       tick={{ fill: '#555', fontSize: 12 }}
                       tickMargin={10}
                     />
-                    <Tooltip content={(props) => <ChartTooltipContent {...props} labelClassName="text-gray-600" />} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar 
                       name="Rainfall (mm)"
                       dataKey="rainfall" 
