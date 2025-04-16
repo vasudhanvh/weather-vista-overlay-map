@@ -109,6 +109,16 @@
   .weather-scroll::-webkit-scrollbar-thumb:hover {
     @apply bg-blue-400/70;
   }
+  
+  /* Hide scrollbar but keep functionality */
+  .overflow-hidden::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+  
+  .overflow-hidden {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 
   /* Glass effect for cards */
   .glass-card {

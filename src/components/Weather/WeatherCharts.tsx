@@ -92,7 +92,7 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
           </TabsList>
           
           <TabsContent value="hourly" className="mt-4">
-            <div className="h-[250px] mt-4"> {/* Reduced height from 340px to 250px */}
+            <div className="h-[320px] mt-4"> {/* Increased height from 250px to 320px */}
               <ChartContainer config={hourlyChartConfig}>
                 <AreaChart data={hourlyData} margin={{ top: 20, right: 30, left: 0, bottom: 30 }}>
                   <defs>
@@ -148,7 +148,7 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
           </TabsContent>
           
           <TabsContent value="temperature" className="mt-4">
-            <div className="h-[250px] mt-4"> {/* Reduced height from 340px to 250px */}
+            <div className="h-[320px] mt-4"> {/* Increased height from 250px to 320px */}
               <ChartContainer config={chartConfig.temperature}>
                 <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 30 }}>
                   <defs>
@@ -204,7 +204,7 @@ const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
           </TabsContent>
           
           <TabsContent value="precipitation" className="mt-4">
-            <div className="h-[250px] mt-4"> {/* Reduced height from 340px to 250px */}
+            <div className="h-[320px] mt-4"> {/* Increased height from 250px to 320px */}
               <ChartContainer config={chartConfig.precipitation}>
                 <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />

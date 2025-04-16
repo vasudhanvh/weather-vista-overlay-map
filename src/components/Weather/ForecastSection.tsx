@@ -59,13 +59,13 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
     <Tabs defaultValue="hourly" className="w-full animate-fade-in">
       <TabsList className="grid grid-cols-2 w-full max-w-xs mx-auto mb-6 bg-white/50 rounded-full">
         <TabsTrigger value="hourly" className="rounded-full">Hourly</TabsTrigger>
-        <TabsTrigger value="daily" className="rounded-full">3-Day Forecast</TabsTrigger>
+        <TabsTrigger value="daily" className="rounded-full">Weekly</TabsTrigger>
       </TabsList>
       
       <TabsContent value="hourly" className="mt-0">
         <Card className="weather-card">
           <h2 className="text-lg font-semibold mb-4 pl-2">Next 24 Hours</h2>
-          <ScrollArea className="weather-scroll pb-6" style={{ height: '300px' }}>
+          <ScrollArea className="weather-scroll pb-6 overflow-hidden" style={{ height: '300px' }}>
             <div className="flex gap-4 pb-6 px-4 overflow-x-auto min-w-full">
               {getNext24Hours().map((hour, index) => {
                 const isCurrent = isCurrentHour(hour.time);
@@ -126,7 +126,7 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
       
       <TabsContent value="daily" className="mt-0">
         <Card className="weather-card">
-          <h2 className="text-lg font-semibold mb-4 pl-2">3-Day Forecast</h2>
+          <h2 className="text-lg font-semibold mb-4 pl-2">Weekly Forecast</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {forecastDays.map((day, index) => {
               const isToday = new Date(day.date).toDateString() === new Date().toDateString();
