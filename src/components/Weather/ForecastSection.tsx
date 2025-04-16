@@ -35,7 +35,8 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
     const hourTime = new Date(timeString);
     return now.getHours() === hourTime.getHours() && 
            now.getDate() === hourTime.getDate() &&
-           now.getMonth() === hourTime.getMonth();
+           now.getMonth() === hourTime.getMonth() &&
+           now.getFullYear() === hourTime.getFullYear();
   };
 
   // Get only the next 24 hours from now
@@ -63,31 +64,43 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
       <TabsContent value="hourly" className="mt-0">
         <Card className="weather-card">
           <h2 className="text-lg font-semibold mb-4 pl-2">Next 24 Hours</h2>
-          <ScrollArea className="weather-scroll">
+          <ScrollArea className="weather-scroll max-h-[280px] pb-4">
             <div className="flex gap-3 pb-4 px-2">
-              {getNext24Hours().map((hour, index) => (
-                <div 
-                  key={index} 
-                  className={`forecast-card min-w-[100px] ${
-                    isCurrentHour(hour.time) ? 'ring-2 ring-primary/70' : ''
-                  }`}
-                >
-                  <p className="font-medium mb-1">{formatHour(hour.time)}</p>
-                  <div className="flex justify-center">
-                    <img 
-                      src={`https:${hour.condition.icon}`} 
-                      alt={hour.condition.text}
-                      className="w-10 h-10"
-                    />
+              {getNext24Hours().map((hour, index) => {
+                const isCurrent = isCurrentHour(hour.time);
+                return (
+                  <div 
+                    key={index} 
+                    className={`forecast-card min-w-[100px] transition-all ${
+                      isCurrent 
+                        ? 'bg-gradient-to-b from-weather-purple/10 to-weather-blue/20 border-weather-blue shadow-md' 
+                        : ''
+                    }`}
+                  >
+                    <div className="relative">
+                      <p className="font-medium mb-1">{isCurrent ? 'Now' : formatHour(hour.time)}</p>
+                      {isCurrent && (
+                        <span className="absolute top-0 right-0 w-2 h-2 bg-weather-blue rounded-full animate-pulse" />
+                      )}
+                    </div>
+                    <div className="flex justify-center">
+                      <img 
+                        src={`https:${hour.condition.icon}`} 
+                        alt={hour.condition.text}
+                        className={`w-10 h-10 ${isCurrent ? 'scale-110' : ''}`}
+                      />
+                    </div>
+                    <p className={`text-xl font-semibold mt-1 ${isCurrent ? 'text-weather-blue' : ''}`}>
+                      {Math.round(hour.temp_c)}°
+                    </p>
+                    <div className="text-xs text-gray-500 mt-1">{hour.condition.text}</div>
+                    <div className="text-xs mt-2 flex justify-between">
+                      <span>{hour.chance_of_rain}% rain</span>
+                      <span>{hour.wind_kph} km/h</span>
+                    </div>
                   </div>
-                  <p className="text-xl font-semibold mt-1">{Math.round(hour.temp_c)}°</p>
-                  <div className="text-xs text-gray-500 mt-1">{hour.condition.text}</div>
-                  <div className="text-xs mt-2 flex justify-between">
-                    <span>{hour.chance_of_rain}% rain</span>
-                    <span>{hour.wind_kph} km/h</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
         </Card>
@@ -97,47 +110,57 @@ const ForecastSection = ({ forecastDays }: ForecastSectionProps) => {
         <Card className="weather-card">
           <h2 className="text-lg font-semibold mb-4 pl-2">3-Day Forecast</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {forecastDays.map((day, index) => (
-              <div key={index} className="forecast-card flex flex-col h-full justify-between">
-                <div>
-                  <p className="font-semibold text-lg">{formatDate(day.date)}</p>
-                  <div className="flex justify-center my-3">
-                    <img 
-                      src={`https:${day.day.condition.icon}`} 
-                      alt={day.day.condition.text}
-                      className="w-16 h-16"
-                    />
-                  </div>
-                  <p className="text-lg font-normal mb-2">{day.day.condition.text}</p>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-2xl font-bold">{Math.round(day.day.maxtemp_c)}°</span>
-                    <span className="text-lg text-gray-500">{Math.round(day.day.mintemp_c)}°</span>
+            {forecastDays.map((day, index) => {
+              const isToday = new Date(day.date).toDateString() === new Date().toDateString();
+              return (
+                <div 
+                  key={index} 
+                  className={`forecast-card flex flex-col h-full justify-between ${
+                    isToday ? 'bg-gradient-to-b from-weather-purple/10 to-weather-blue/20 border-weather-blue shadow-md' : ''
+                  }`}
+                >
+                  <div>
+                    <p className="font-semibold text-lg">{isToday ? 'Today' : formatDate(day.date)}</p>
+                    <div className="flex justify-center my-3">
+                      <img 
+                        src={`https:${day.day.condition.icon}`} 
+                        alt={day.day.condition.text}
+                        className={`w-16 h-16 ${isToday ? 'scale-110' : ''}`}
+                      />
+                    </div>
+                    <p className="text-lg font-normal mb-2">{day.day.condition.text}</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-                    <div>
-                      <p className="text-gray-500">Rain</p>
-                      <p>{day.day.daily_chance_of_rain}%</p>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className={`text-2xl font-bold ${isToday ? 'text-weather-blue' : ''}`}>
+                        {Math.round(day.day.maxtemp_c)}°
+                      </span>
+                      <span className="text-lg text-gray-500">{Math.round(day.day.mintemp_c)}°</span>
                     </div>
-                    <div>
-                      <p className="text-gray-500">Wind</p>
-                      <p>{Math.round(day.day.maxwind_kph)} km/h</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Humidity</p>
-                      <p>{day.day.avghumidity}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">UV Index</p>
-                      <p>{day.day.uv}</p>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+                      <div>
+                        <p className="text-gray-500">Rain</p>
+                        <p>{day.day.daily_chance_of_rain}%</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Wind</p>
+                        <p>{Math.round(day.day.maxwind_kph)} km/h</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Humidity</p>
+                        <p>{day.day.avghumidity}%</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">UV Index</p>
+                        <p>{day.day.uv}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       </TabsContent>

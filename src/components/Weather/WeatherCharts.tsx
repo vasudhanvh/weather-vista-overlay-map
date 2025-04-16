@@ -1,227 +1,244 @@
 
-import { useEffect, useRef } from 'react';
 import { ForecastDay } from '@/types/weather';
 import { Card, CardContent } from '@/components/ui/card';
-import { Chart, registerables } from 'chart.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Register Chart.js components
-Chart.register(...registerables);
+import { 
+  CartesianGrid, 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  BarChart, 
+  Bar, 
+  Legend
+} from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 interface WeatherChartsProps {
   forecastDays: ForecastDay[];
 }
 
 const WeatherCharts = ({ forecastDays }: WeatherChartsProps) => {
-  const maxTempChartRef = useRef<HTMLCanvasElement | null>(null);
-  const minTempChartRef = useRef<HTMLCanvasElement | null>(null);
-  const rainChartRef = useRef<HTMLCanvasElement | null>(null);
-  
-  // Chart instances refs
-  const maxTempChartInstance = useRef<Chart | null>(null);
-  const minTempChartInstance = useRef<Chart | null>(null);
-  const rainChartInstance = useRef<Chart | null>(null);
-
   // Format dates for labels
   const formatChartDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString(undefined, {
       weekday: 'short',
-      month: 'short',
-      day: 'numeric',
     });
   };
+  
+  // Prepare chart data
+  const chartData = forecastDays.map(day => ({
+    name: formatChartDate(day.date),
+    date: day.date,
+    maxTemp: Math.round(day.day.maxtemp_c),
+    minTemp: Math.round(day.day.mintemp_c),
+    rainfall: Math.round(day.day.totalprecip_mm * 10) / 10,
+    chanceOfRain: day.day.daily_chance_of_rain,
+  }));
 
-  // Initialize charts
-  useEffect(() => {
-    if (!forecastDays.length) return;
-
-    const dates = forecastDays.map(day => formatChartDate(day.date));
-    const maxTemps = forecastDays.map(day => day.day.maxtemp_c);
-    const minTemps = forecastDays.map(day => day.day.mintemp_c);
-    const rainfall = forecastDays.map(day => day.day.totalprecip_mm);
-
-    // Common chart options
-    const commonOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          titleColor: '#333',
-          bodyColor: '#333',
-          borderColor: 'rgba(0, 0, 0, 0.1)',
-          borderWidth: 1,
-          cornerRadius: 6,
-          padding: 10,
-          displayColors: false,
-        },
-      },
-      scales: {
-        x: {
-          grid: {
-            display: false,
-          },
-          ticks: {
-            color: '#555',
-            font: {
-              family: 'Segoe UI, system-ui, sans-serif',
-            },
-          },
-        },
-        y: {
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)',
-          },
-          ticks: {
-            color: '#555',
-            font: {
-              family: 'Segoe UI, system-ui, sans-serif',
-            },
-          },
-        },
-      },
-    };
-
-    // Destroy existing chart instances
-    if (maxTempChartInstance.current) {
-      maxTempChartInstance.current.destroy();
+  // Chart configs
+  const chartConfig = {
+    temperature: {
+      max: { label: 'Max Temperature °C', theme: { light: '#ff7043', dark: '#ff5722' } },
+      min: { label: 'Min Temperature °C', theme: { light: '#33C3F0', dark: '#00b8d4' } }
+    },
+    precipitation: {
+      rainfall: { label: 'Rainfall (mm)', theme: { light: 'rgba(51, 153, 255, 0.8)', dark: 'rgba(30, 136, 229, 0.8)' } },
+      chanceOfRain: { label: 'Chance of Rain (%)', theme: { light: '#9b87f5', dark: '#7c4dff' } }
     }
+  };
 
-    if (minTempChartInstance.current) {
-      minTempChartInstance.current.destroy();
-    }
+  // Generate hourly temperature data
+  const getHourlyTempData = () => {
+    const today = forecastDays[0];
+    const hours = today.hour;
+    const now = new Date();
+    
+    return hours
+      .filter(h => {
+        const hourTime = new Date(h.time);
+        return hourTime.getHours() >= now.getHours() || hourTime.getDate() > now.getDate();
+      })
+      .slice(0, 12)
+      .map(h => ({
+        name: new Date(h.time).toLocaleTimeString(undefined, { hour: '2-digit' }),
+        temp: Math.round(h.temp_c),
+        feelsLike: Math.round(h.feelslike_c),
+        time: h.time
+      }));
+  };
 
-    if (rainChartInstance.current) {
-      rainChartInstance.current.destroy();
-    }
-
-    // Create max temperature chart
-    if (maxTempChartRef.current) {
-      maxTempChartInstance.current = new Chart(maxTempChartRef.current, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: 'Max Temperature (°C)',
-            data: maxTemps,
-            borderColor: '#ff7043',
-            backgroundColor: 'rgba(255, 112, 67, 0.1)',
-            borderWidth: 3,
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: '#ff7043',
-            pointBorderColor: 'white',
-            pointRadius: 5,
-            pointHoverRadius: 7,
-          }]
-        },
-        options: { ...commonOptions },
-      });
-    }
-
-    // Create min temperature chart
-    if (minTempChartRef.current) {
-      minTempChartInstance.current = new Chart(minTempChartRef.current, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: 'Min Temperature (°C)',
-            data: minTemps,
-            borderColor: '#33C3F0',
-            backgroundColor: 'rgba(51, 195, 240, 0.1)',
-            borderWidth: 3,
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: '#33C3F0',
-            pointBorderColor: 'white',
-            pointRadius: 5,
-            pointHoverRadius: 7,
-          }]
-        },
-        options: { ...commonOptions },
-      });
-    }
-
-    // Create precipitation chart
-    if (rainChartRef.current) {
-      rainChartInstance.current = new Chart(rainChartRef.current, {
-        type: 'bar',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: 'Precipitation (mm)',
-            data: rainfall,
-            backgroundColor: 'rgba(51, 153, 255, 0.7)',
-            borderColor: 'rgba(51, 153, 255, 1)',
-            borderWidth: 1,
-            borderRadius: 4,
-          }]
-        },
-        options: { 
-          ...commonOptions,
-          plugins: {
-            ...commonOptions.plugins,
-            title: {
-              display: false,
-              text: 'Precipitation (mm)',
-              font: {
-                size: 16,
-                weight: 'bold',
-              },
-            },
-          },
-        },
-      });
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (maxTempChartInstance.current) {
-        maxTempChartInstance.current.destroy();
-      }
-      if (minTempChartInstance.current) {
-        minTempChartInstance.current.destroy();
-      }
-      if (rainChartInstance.current) {
-        rainChartInstance.current.destroy();
-      }
-    };
-  }, [forecastDays]);
+  const hourlyData = getHourlyTempData();
+  
+  const hourlyChartConfig = {
+    temp: { label: 'Temperature °C', theme: { light: '#ff7043', dark: '#ff5722' } },
+    feelsLike: { label: 'Feels Like °C', theme: { light: '#9b87f5', dark: '#7c4dff' } }
+  };
 
   return (
     <Card className="weather-card animate-fade-in">
       <CardContent className="p-4">
         <h2 className="text-xl font-semibold mb-4">Weather Charts</h2>
         
-        <Tabs defaultValue="temperature" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-xs mx-auto mb-4 bg-white/50">
+        <Tabs defaultValue="hourly" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full max-w-xs mx-auto mb-4 bg-white/50">
+            <TabsTrigger value="hourly">Hourly</TabsTrigger>
             <TabsTrigger value="temperature">Temperature</TabsTrigger>
             <TabsTrigger value="precipitation">Precipitation</TabsTrigger>
           </TabsList>
           
+          <TabsContent value="hourly" className="mt-0">
+            <div className="h-80 mt-6">
+              <ChartContainer config={hourlyChartConfig}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={hourlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <YAxis 
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <Tooltip content={(props) => <ChartTooltipContent {...props} labelClassName="text-gray-600" />} />
+                    <Area 
+                      type="monotone" 
+                      name="Temperature"
+                      dataKey="temp" 
+                      fill="url(#colorTemp)" 
+                      stroke="#ff7043" 
+                      strokeWidth={2}
+                      dot={{ fill: '#ff7043', stroke: 'white', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      name="Feels Like"
+                      dataKey="feelsLike" 
+                      fill="url(#colorFeelsLike)" 
+                      stroke="#9b87f5" 
+                      strokeWidth={2}
+                      dot={{ fill: '#9b87f5', stroke: 'white', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: 15 }} />
+                    <defs>
+                      <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ff7043" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#ff7043" stopOpacity={0.1}/>
+                      </linearGradient>
+                      <linearGradient id="colorFeelsLike" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#9b87f5" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#9b87f5" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="temperature" className="mt-0">
-            <div className="grid grid-cols-1 gap-6">
-              <div className="chart-container" style={{ height: '250px' }}>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Maximum Temperature (°C)</h3>
-                <canvas ref={maxTempChartRef}></canvas>
-              </div>
-              
-              <div className="chart-container" style={{ height: '250px' }}>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Minimum Temperature (°C)</h3>
-                <canvas ref={minTempChartRef}></canvas>
-              </div>
+            <div className="h-80 mt-6">
+              <ChartContainer config={chartConfig.temperature}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <YAxis 
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <Tooltip content={(props) => <ChartTooltipContent {...props} labelClassName="text-gray-600" />} />
+                    <Area 
+                      type="monotone" 
+                      name="Max Temperature"
+                      dataKey="maxTemp" 
+                      fill="url(#colorMax)" 
+                      stroke="#ff7043" 
+                      strokeWidth={2}
+                      dot={{ fill: '#ff7043', stroke: 'white', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      name="Min Temperature"
+                      dataKey="minTemp" 
+                      fill="url(#colorMin)" 
+                      stroke="#33C3F0" 
+                      strokeWidth={2}
+                      dot={{ fill: '#33C3F0', stroke: 'white', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: 'white', strokeWidth: 2 }}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: 15 }} />
+                    <defs>
+                      <linearGradient id="colorMax" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ff7043" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#ff7043" stopOpacity={0.1}/>
+                      </linearGradient>
+                      <linearGradient id="colorMin" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#33C3F0" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#33C3F0" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </div>
           </TabsContent>
           
           <TabsContent value="precipitation" className="mt-0">
-            <div className="chart-container" style={{ height: '300px' }}>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Precipitation (mm)</h3>
-              <canvas ref={rainChartRef}></canvas>
+            <div className="h-80 mt-6">
+              <ChartContainer config={chartConfig.precipitation}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <YAxis 
+                      yAxisId="left"
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                      domain={[0, 'auto']}
+                    />
+                    <YAxis 
+                      yAxisId="right" 
+                      orientation="right"
+                      domain={[0, 100]}
+                      tick={{ fill: '#555', fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <Tooltip content={(props) => <ChartTooltipContent {...props} labelClassName="text-gray-600" />} />
+                    <Bar 
+                      name="Rainfall (mm)"
+                      dataKey="rainfall" 
+                      yAxisId="left"
+                      fill="rgba(51, 153, 255, 0.8)" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      name="Chance of Rain (%)"
+                      dataKey="chanceOfRain" 
+                      yAxisId="right"
+                      fill="#9b87f5" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: 15 }} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </div>
           </TabsContent>
         </Tabs>
